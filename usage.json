@@ -31,11 +31,50 @@
       "input": 289746,
       "output": 3911,
       "total": 293657
+    },
+    {
+      "ts": "2026-11-23T05:40:14.094690+08:00",
+      "ai": "ChatGPT",
+      "task": "$caveman Implement feature \"Pengeluaran Operasional\" on the current branch feat/",
+      "input": 0,
+      "output": 0,
+      "total": 52521
     }
   ],
   "grokbot": {
     "weekly_percent": 8.4,
     "resets_at": "2026-11-30T01:48:00+08:00",
     "updated_at": "2026-11-23T05:12:35.063341+08:00"
+  },
+  "chatgpt_limits": {
+    "source": "codex-cli",
+    "plan": "plus",
+    "five_hour": {
+      "used_percent": 12.0,
+      "window_minutes": 300,
+      "resets_at": "2026-11-23T09:26:31+08:00"
+    },
+    "weekly": {
+      "used_percent": 60.0,
+      "window_minutes": 10080,
+      "resets_at": "2026-11-28T11:36:58+08:00"
+    },
+    "observed_at": "2026-11-23T05:40:09.332000+08:00",
+    "updated_at": "2026-11-23T05:40:14.150003+08:00"
+  },
+  "claude_limits": {
+    "source": "claude-code",
+    "five_hour": {
+      "used_percent": 8.0,
+      "resets_at": "2026-11-23T09:10:00+08:00",
+      "status": "allowed"
+    },
+    "weekly": {
+      "used_percent": 7.0,
+      "resets_at": "2026-11-28T22:00:00+08:00",
+      "status": "allowed"
+    },
+    "observed_at": "2026-11-23T05:25:43.979668+08:00",
+    "updated_at": "2026-11-23T05:40:14.150003+08:00"
   }
 }
