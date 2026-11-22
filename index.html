@@ -26,7 +26,7 @@
 /* v8 live hero */ .quick-sim{margin-bottom:12px}.quick-sim .row{align-items:center}.quick-sim .row>div{min-width:0}.quick-sim .sim-progress{margin:12px 0 8px}.quick-sim .btn{white-space:nowrap}@media(max-width:420px){.quick-sim{padding:12px}.quick-sim .btn{padding:10px;font-size:12px}} /* v7 ultra Grok */
 .ultra-box{border:1px solid #987d48;background:linear-gradient(145deg,#302b20,#20231e);border-radius:14px;padding:14px;margin:12px 0}.ultra-row{display:flex;gap:14px;align-items:center;justify-content:space-between}.ultra-row input{width:22px;height:22px;accent-color:#e9be76}.ultra-metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}.ultra-metrics>div{background:#171a16;padding:9px;border-radius:9px}.ultra-metrics b{display:block;color:#f0c88c;font-size:18px}.ultra-metrics span{font-size:11px;color:var(--muted)}.ultra-fine{color:var(--muted);font-size:12px;line-height:1.5}
 </style></head><body><div class="wrap"><header><div class="brand"><div class="sun"></div><span>STUDIO LOKALIN</span></div><span class="badge" id="modeLabel">Simulasi lokal</span></header><div class="row"><h1>AI Office</h1><button id="pauseBtn" class="btn ghost">Ⅱ Jeda</button></div><section class="card quick-sim"><div class="row"><div><strong>⚡ Simulasi Token Langsung</strong><div class="small" id="heroSimStatus">Siap menjalankan simulasi 3 AI</div></div><button class="btn primary" id="heroRun">▶ Mulai Demo</button></div><div class="row" style="margin-top:10px"><div><strong id="heroToken">0</strong><div class="small">Token simulasi</div></div><div><strong id="heroCost">Rp0</strong><div class="small">Biaya estimasi</div></div></div><div class="sim-progress"><span id="heroBar"></span></div><div class="small">Simulasi lokal, tidak menggunakan API asli.</div></section><section class="card" style="padding:10px"><div class="office office-art" id="office" role="img" aria-label="Kantor isometrik pixel-art Studio Lokalin dengan GrokBot, ChatGPT, dan Claude"><div class="office-sheen"></div><div class="work-light grok-light"></div><div class="work-light gpt-light"></div><div class="work-light claude-light"></div></div><div class="officefoot"><span id="sceneText"><i class="dot"></i>Tim menikmati kopi</span><span id="wita"></span></div></section><div class="grid stats" style="margin-top:12px"><div class="card"><div class="small">AI Agents</div><div class="statval">3</div></div><div class="card"><div class="small">Tugas Aktif</div><div class="statval" id="activeCount">0</div></div><div class="card"><div class="small">Estimasi + Catatan</div><div class="statval" id="costStat">Rp0</div></div></div><h2>Workspace</h2><nav class="tabs" aria-label="Navigasi"><button class="tab active" data-tab="tasks">Tugas</button><button class="tab" data-tab="team">Tim AI</button><button class="tab" data-tab="tokens">Token</button><button class="tab" data-tab="settings">Pengaturan</button></nav><main>
-<section id="tasks" class="pane"><h2>Tugas tim</h2><div class="card stack"><label for="taskText">Tugas baru</label><textarea id="taskText" placeholder="Contoh: Buat landing page promo Lokalin Cafe"></textarea><div class="row" style="flex-wrap:wrap"><label style="margin:0"><input type="checkbox" id="economy" checked> Mode Hemat</label><button class="btn primary" id="addTask">+ Tambah tugas</button></div><p class="small" style="margin:0">Simulasi lokal. Tugas tidak dikirim ke AI tanpa koneksi API.</p></div><div class="card stack sim-controls" id="simPanel"><div class="row"><strong>Simulasi AI otomatis</strong><span class="badge" id="simState">Siap</span></div><div class="sim-note">Demo lokal tanpa API. Progres dan token merupakan simulasi, bukan biaya/tagihan nyata.</div><div class="toolbar"><button class="btn primary" id="runSim">▶ Jalankan simulasi</button><button class="btn ghost" id="stopSim" disabled>■ Hentikan</button></div><div class="row"><span class="small" id="simStage">Belum ada simulasi</span><span id="simPct" class="small sim-metric">0%</span></div><div class="sim-progress"><span id="simBar"></span></div><div id="simLive" class="small sim-metric">0 token · Rp0 estimasi</div></div><div class="card" style="margin-top:12px"><div class="row"><strong>Token per AI · Simulasi</strong><span class="small">Input / Output</span></div><div class="agent-token-grid" id="simAgentCards" aria-live="polite"></div><p class="small" style="margin:8px 0 0">Angka estimasi lokal, bukan penggunaan API sebenarnya.</p></div><div class="ultra-box"><div class="ultra-row"><div><strong>⚡ GrokBot Ultra Hemat</strong><div class="small">Ringkas konteks PM · batasi jawaban · hindari pengulangan</div></div><input type="checkbox" id="ultraGrok" checked aria-label="Aktifkan GrokBot Ultra Hemat"></div><div class="ultra-metrics"><div><b id="grokPreset">120</b><span>Token Grok / tahap demo</span></div><div><b id="grokSaving">73%</b><span>Hemat vs standar</span></div><div><b id="grokCap">120</b><span>Batas simulasi</span></div></div><p class="ultra-fine" style="margin:0">Batas ini berlaku untuk simulator lokal, bukan pembatasan API Grok yang belum terhubung. Penerapan nyata harus dilakukan di backend.</p></div><h2>Task Board</h2><div class="taskfilters"><input class="input" id="taskSearch" placeholder="Cari tugas..." aria-label="Cari tugas"><select id="agentFilter" aria-label="Filter agent"><option value="">Semua AI</option><option>GrokBot</option><option>ChatGPT</option><option>Claude</option></select></div><div class="board" id="board"></div><h2>Riwayat aktivitas</h2><div id="activity" class="log"></div></section>
+<section id="tasks" class="pane"><h2>Tugas tim</h2><div class="card stack"><label for="taskText">Tugas baru</label><textarea id="taskText" placeholder="Contoh: Buat landing page promo Lokalin Cafe"></textarea><div class="row" style="flex-wrap:wrap"><label style="margin:0"><input type="checkbox" id="economy" checked> Mode Hemat</label><button class="btn primary" id="addTask">+ Tambah tugas</button></div><p class="small" style="margin:0">Simulasi lokal. Tugas tidak dikirim ke AI tanpa koneksi API.</p></div><div class="card stack sim-controls" id="simPanel"><div class="row"><strong>Simulasi AI otomatis</strong><span class="badge" id="simState">Siap</span></div><div class="sim-note">Demo lokal tanpa API. Progres dan token merupakan simulasi, bukan biaya/tagihan nyata.</div><div class="toolbar"><button class="btn primary" id="runSim">▶ Jalankan simulasi</button><button class="btn ghost" id="stopSim" disabled>■ Hentikan</button></div><div class="row"><span class="small" id="simStage">Belum ada simulasi</span><span id="simPct" class="small sim-metric">0%</span></div><div class="sim-progress"><span id="simBar"></span></div><div id="simLive" class="small sim-metric">0 token · Rp0 estimasi</div></div><div class="card" style="margin-top:12px"><div class="row"><strong id="tokenMode">Token per AI · Simulasi</strong><span class="small">Input / Output</span></div><div class="agent-token-grid" id="simAgentCards" aria-live="polite"></div><p id="tokenModeNote" class="small" style="margin:8px 0 0">Angka estimasi lokal, bukan penggunaan API sebenarnya.</p></div><div class="ultra-box"><div class="ultra-row"><div><strong>⚡ GrokBot Ultra Hemat</strong><div class="small">Ringkas konteks PM · batasi jawaban · hindari pengulangan</div></div><input type="checkbox" id="ultraGrok" checked aria-label="Aktifkan GrokBot Ultra Hemat"></div><div class="ultra-metrics"><div><b id="grokPreset">120</b><span>Token Grok / tahap demo</span></div><div><b id="grokSaving">73%</b><span>Hemat vs standar</span></div><div><b id="grokCap">120</b><span>Batas simulasi</span></div></div><p class="ultra-fine" style="margin:0">Batas ini berlaku untuk simulator lokal, bukan pembatasan API Grok yang belum terhubung. Penerapan nyata harus dilakukan di backend.</p></div><h2>Task Board</h2><div class="taskfilters"><input class="input" id="taskSearch" placeholder="Cari tugas..." aria-label="Cari tugas"><select id="agentFilter" aria-label="Filter agent"><option value="">Semua AI</option><option>GrokBot</option><option>ChatGPT</option><option>Claude</option></select></div><div class="board" id="board"></div><h2>Riwayat aktivitas</h2><div id="activity" class="log"></div></section>
 <section id="team" class="pane hidden"><h2>Tim studio</h2><div class="grid agents"><div class="card agentcard"><strong>GrokBot</strong><span class="tag">Project Manager</span><p class="small">API: belum terhubung</p><span class="small" id="grokWork">Siap simulasi</span></div><div class="card agentcard"><strong>ChatGPT</strong><span class="tag">Developer & Analyst</span><p class="small">API: belum terhubung</p><span class="small" id="gptWork">Siap simulasi</span></div><div class="card agentcard"><strong>Claude</strong><span class="tag">Reviewer</span><p class="small">API: belum terhubung</p><span class="small" id="claudeWork">Siap simulasi</span></div></div><h2>Alur kerja</h2><div class="card stack"><div>1. GrokBot membagi tugas</div><div>2. ChatGPT mengerjakan</div><div>3. Claude melakukan review</div><div class="notice">Alur ini adalah rancangan. Mode Ultra mengurangi token GrokBot di simulator. Tidak ada panggilan API otomatis dari aplikasi ini.</div></div></section>
 <section id="tokens" class="pane hidden"><h2>Token Dashboard</h2><div class="notice">Pemakaian ditampilkan dari simulasi dan catatan manual. Semua biaya simulasi memakai tarif contoh, bukan tagihan API atau harga resmi.</div><div class="grid stats" style="margin-top:12px"><div class="card"><div class="small">Total token</div><div class="statval" id="tokenStat">0</div></div><div class="card"><div class="small">Biaya bulan ini</div><div class="statval" id="monthlyCost">Rp0</div></div><div class="card"><div class="small">Sisa anggaran</div><div class="statval" id="remaining">Rp0</div></div></div><div class="card stack" style="margin-top:12px"><label for="budget">Anggaran bulanan (Rp)</label><input class="input" type="number" min="0" id="budget" value="100000"><div class="meter"><span id="budgetMeter"></span></div><span class="small" id="budgetDesc"></span><button class="btn" id="saveBudget">Simpan anggaran</button></div><h2>Rincian simulasi</h2><div class="card stack"><div id="simBreakdown" class="small">Belum ada token simulasi.</div><div class="sim-note">Tarif CONTOH / 1.000 token (input / output): GrokBot Rp30 / Rp120; ChatGPT Rp50 / Rp200; Claude Rp60 / Rp240. Sesuaikan dengan model/API sesungguhnya sebelum menghitung anggaran nyata.</div><button class="btn" id="clearSim">Hapus catatan simulasi</button></div><h2>Catat pemakaian API</h2><div class="card stack"><div><label for="provider">Penyedia</label><select id="provider"><option>GrokBot</option><option>ChatGPT</option><option>Claude</option></select></div><div class="grid" style="grid-template-columns:1fr 1fr"><div><label for="usedTokens">Token terpakai</label><input id="usedTokens" class="input" type="number" min="0" placeholder="0"></div><div><label for="usedCost">Biaya rupiah</label><input id="usedCost" class="input" type="number" min="0" placeholder="0"></div></div><button class="btn primary" id="addUsage">Catat penggunaan</button><div class="small" id="usageBreakdown"></div></div><h2>Riwayat penggunaan</h2><div id="usageHistory" class="tokenlist"></div></section>
 <section id="settings" class="pane hidden"><h2>Pengaturan</h2><div class="card stack"><div class="row"><div><strong>Mode Hemat</strong><div class="small">Pilih satu AI utama bila API nanti terhubung</div></div><input id="economySettings" type="checkbox" checked aria-label="Mode Hemat"></div><div class="row"><div><strong>Mode simulasi</strong><div class="small">Tidak mengakses API berbayar</div></div><span class="tag">Aktif</span></div><div class="row"><div><strong>Zona waktu</strong><div class="small">Asia/Makassar</div></div><span>WITA</span></div><div class="row"><div><strong>Penyimpanan</strong><div class="small">Hanya browser di perangkat ini</div></div><button class="btn danger" id="reset">Hapus data</button></div></div><p class="small">GrokBot Ultra Hemat diatur pada tab Tugas. Simulasi menggunakan 80 token input + 40 output untuk peran PM, dibandingkan 300 + 150 dalam mode standar.</p><h2>Cadangan data</h2><div class="card stack"><p class="small" style="margin:0">Ekspor tugas dan catatan token sebagai JSON. Data tersimpan hanya pada perangkat ini.</p><div class="toolbar"><button class="btn" id="exportData">Ekspor JSON</button><button class="btn" id="importData">Impor JSON</button><input id="importFile" type="file" accept="application/json,.json" class="hidden"></div></div><h2>Integrasi asli</h2><div class="notice">Untuk integrasi aman, gunakan Cloudflare Worker sebagai backend, simpan kunci API sebagai secret server-side, tambahkan autentikasi dan pembatasan biaya. Jangan simpan API key dalam HTML/GitHub Pages.</div></section></main><div class="footer">STUDIO LOKALIN • AI OFFICE • WITA</div></div><script>
@@ -44,6 +44,79 @@ const simPhases=()=>s.sim?.economy?['GrokBot','ChatGPT']:['GrokBot','ChatGPT','C
 const monthWita=()=>new Intl.DateTimeFormat('en-CA',{timeZone:'Asia/Makassar',year:'numeric',month:'2-digit'}).format(new Date());
 function simTotal(p,input,output){return input*SIM_RATES[p].input/1000+output*SIM_RATES[p].output/1000}
 function simUsage(){let u={tokens:0,cost:0};for(const x of s.usage.filter(x=>x.source==='sim')){u.tokens+=(Number(x.tokens)||0);u.cost+=(Number(x.cost)||0)}return u}
+let realUsage = null;
+const usageDate = new Intl.DateTimeFormat('id-ID', {
+ timeZone: 'Asia/Makassar', dateStyle: 'short', timeStyle: 'short'
+});
+
+async function loadRealUsage() {
+ const totals = new Map(['ChatGPT', 'Claude'].map(ai => [
+  ai, {input: 0, output: 0, total: 0, runs: 0, lastRun: null}
+ ]));
+ try {
+  const response = await fetch('./usage.json', {cache: 'no-cache'});
+  if (!response.ok) return;
+  const data = await response.json();
+  const entries = Array.isArray(data) ? data : data?.entries;
+  if (!Array.isArray(entries)) return;
+
+  for (const entry of entries) {
+   const usage = totals.get(entry?.ai);
+   if (!usage) continue;
+   const {input, output, total, ts} = entry;
+   if (![input, output, total].every(n => Number.isFinite(n) && n >= 0)) continue;
+   const lastRun = typeof ts === 'string' ? Date.parse(ts) : NaN;
+   if (!Number.isFinite(lastRun)) continue;
+
+   usage.input += input;
+   usage.output += output;
+   usage.total += total;
+   usage.runs++;
+   if (usage.lastRun === null || lastRun > usage.lastRun) usage.lastRun = lastRun;
+  }
+ } catch {
+  return;
+ }
+
+ if (![...totals.values()].some(usage => usage.runs)) return;
+ realUsage = totals;
+ $('tokenMode').textContent = 'Token per AI · Data nyata';
+ $('tokenModeNote').textContent = 'ChatGPT dan Claude memakai langganan. Angka GrokBot adalah estimasi simulasi lokal.';
+ drawSim();
+}
+
+function renderTokenCard(name, total, status, details, pct) {
+ const card = document.createElement('div');
+ card.className = 'agent-token-card';
+ const heading = document.createElement('div');
+ const title = document.createElement('strong');
+ title.textContent = name;
+ const statusText = document.createElement('span');
+ statusText.className = 'small';
+ statusText.textContent = status;
+ heading.append(title, statusText);
+ const count = document.createElement('div');
+ count.className = 'token-num';
+ count.textContent = simFormat(total);
+ const metrics = document.createElement('div');
+ metrics.className = 'small';
+ for (const detail of details) {
+  const line = document.createElement('div');
+  line.textContent = detail;
+  metrics.append(line);
+ }
+ card.append(heading, count, metrics);
+ if (pct !== undefined) {
+  const meter = document.createElement('div');
+  meter.className = 'token-meter';
+  const bar = document.createElement('span');
+  bar.style.width = pct + '%';
+  meter.append(bar);
+  card.append(meter);
+ }
+ return card;
+}
+
 function drawSim(){
  const sim=s.sim,parts=sim?simPhases():[],current=sim?parts[sim.index]:null;
  const running=!!sim,pc=running?Math.round((sim.index+(sim.sec||0)/6)/parts.length*100):0;
@@ -57,6 +130,15 @@ function drawSim(){
  const pendingCost=running?simTotal(current,cur.input*ratio,cur.output*ratio):0;
  $('simLive').textContent=simFormat(simUsage().tokens+pending)+' token simulasi · '+money(simUsage().cost+pendingCost)+' estimasi';$('heroToken').textContent=simFormat(simUsage().tokens+pending);$('heroCost').textContent=money(simUsage().cost+pendingCost);$('heroBar').style.width=pc+'%';$('heroSimStatus').textContent=running?(s.paused?'Simulasi dijeda':current+' sedang bekerja · '+pc+'%'):'Siap · tekan Mulai Demo';$('heroRun').textContent=running?'■ Hentikan':'▶ Mulai Demo';$('costStat').textContent=money(s.usage.reduce((sum,u)=>sum+Number(u.cost||0),0)+pendingCost);
  const perAgent=['GrokBot','ChatGPT','Claude'].map(name=>{
+ const usage = realUsage?.get(name);
+ if (usage) {
+  const last = usage.lastRun === null ? '—' : usageDate.format(usage.lastRun) + ' WITA';
+  return renderTokenCard(name, usage.total, 'Data nyata', [
+   `Input: ${simFormat(usage.input)} · Output: ${simFormat(usage.output)}`,
+   `Jumlah run: ${simFormat(usage.runs)}`,
+   `Terakhir dijalankan: ${last}`
+  ]);
+ }
  const records=s.usage.filter(u=>u.source==='sim'&&u.provider===name);
  const doneInput=records.reduce((n,u)=>n+(Number(u.input)||0),0),doneOutput=records.reduce((n,u)=>n+(Number(u.output)||0),0);
  const fraction=running&&current===name?ratio:0;
@@ -65,9 +147,12 @@ function drawSim(){
  const cost=records.reduce((n,u)=>n+(Number(u.cost)||0),0)+simTotal(name,input-doneInput,output-doneOutput);
  const status=running&&current===name?'Sedang memproses':records.length?'Selesai / tercatat':'Belum digunakan';
  const pct=running&&current===name?Math.round(fraction*100):records.length?100:0;
- return `<div class="agent-token-card"><div><strong>${name}</strong><span class="small">${status}</span></div><div class="token-num">${simFormat(input+output)}</div><div class="small">Input: ${simFormat(input)} · Output: ${simFormat(output)}<br>Estimasi: ${money(cost)}</div><div class="token-meter"><span style="width:${pct}%"></span></div></div>`;
+ return renderTokenCard(name, input + output, realUsage ? 'Estimasi · ' + status : status, [
+  `Input: ${simFormat(input)} · Output: ${simFormat(output)}`,
+  `Estimasi: ${money(cost)}`
+ ], pct);
  });
- $('simAgentCards').innerHTML=perAgent.join('');
+ $('simAgentCards').replaceChildren(...perAgent);
  const grouped=['GrokBot','ChatGPT','Claude'].map(name=>{
  const records=s.usage.filter(u=>u.source==='sim'&&u.provider===name);
  const input=records.reduce((n,u)=>n+(Number(u.input)||0),0),output=records.reduce((n,u)=>n+(Number(u.output)||0),0);
@@ -111,5 +196,5 @@ render=function(){renderBase();drawSim();updateUltraUI()};
 // Resume state from storage only if task still exists; no API request is made.
 if(s.sim&&!s.tasks.some(t=>t.id===s.sim.taskId))s.sim=null;
 setInterval(simTick,1000);
-tick();setInterval(tick,30000);render()})();
+tick();setInterval(tick,30000);render();loadRealUsage()})();
 </script></body></html>
