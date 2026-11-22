@@ -1,34 +1,41 @@
-[
-  {
-    "ts": "2026-11-23T04:27:44.079532+08:00",
-    "ai": "ChatGPT",
-    "task": "$caveman Di index.html (v8 Studio Lokalin), tambahkan pembacaan usage.json (fetc",
-    "input": 0,
-    "output": 0,
-    "total": 33833
-  },
-  {
-    "ts": "2026-11-23T04:30:13.553001+08:00",
-    "ai": "Claude",
-    "task": "/caveman Review the git diff of branch feat/real-token-usage versus main in this",
-    "input": 127649,
-    "output": 3027,
-    "total": 130676
-  },
-  {
-    "ts": "2026-11-23T05:00:34.773655+08:00",
-    "ai": "ChatGPT",
-    "task": "$caveman Edit the repo at /home/box/projects/studio-lokalin on branch feat/no-si",
-    "input": 0,
-    "output": 0,
-    "total": 83401
-  },
-  {
-    "ts": "2026-11-23T05:07:31.760986+08:00",
-    "ai": "Claude",
-    "task": "/caveman Review the uncommitted work on branch feat/no-simulation in /home/box/p",
-    "input": 289746,
-    "output": 3911,
-    "total": 293657
+{
+  "entries": [
+    {
+      "ts": "2026-11-23T04:27:44.079532+08:00",
+      "ai": "ChatGPT",
+      "task": "$caveman Di index.html (v8 Studio Lokalin), tambahkan pembacaan usage.json (fetc",
+      "input": 0,
+      "output": 0,
+      "total": 33833
+    },
+    {
+      "ts": "2026-11-23T04:30:13.553001+08:00",
+      "ai": "Claude",
+      "task": "/caveman Review the git diff of branch feat/real-token-usage versus main in this",
+      "input": 127649,
+      "output": 3027,
+      "total": 130676
+    },
+    {
+      "ts": "2026-11-23T05:00:34.773655+08:00",
+      "ai": "ChatGPT",
+      "task": "$caveman Edit the repo at /home/box/projects/studio-lokalin on branch feat/no-si",
+      "input": 0,
+      "output": 0,
+      "total": 83401
+    },
+    {
+      "ts": "2026-11-23T05:07:31.760986+08:00",
+      "ai": "Claude",
+      "task": "/caveman Review the uncommitted work on branch feat/no-simulation in /home/box/p",
+      "input": 289746,
+      "output": 3911,
+      "total": 293657
+    }
+  ],
+  "grokbot": {
+    "weekly_percent": 8.4,
+    "resets_at": "2026-11-30T01:48:00+08:00",
+    "updated_at": "2026-11-23T05:12:35.063341+08:00"
   }
-]
+}
