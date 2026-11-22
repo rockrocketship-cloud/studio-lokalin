@@ -3,11 +3,17 @@
 # usage: ai-run codex <repo_dir> "<prompt>"
 #        ai-run claude <repo_dir> "<prompt>"
 set -euo pipefail
+umask 077
 export PATH="${HOME}/.local/bin:${PATH}"
 
 USAGE_REPO="${USAGE_REPO:-${HOME}/projects/studio-lokalin}"
 AI_RUN_BRANCH="${AI_RUN_BRANCH:-main}"
 MAX_ENTRIES=500
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+COLLECT_USAGE="$SCRIPT_DIR/collect-usage.sh"
+if [[ ! -x $COLLECT_USAGE ]]; then
+  COLLECT_USAGE="$SCRIPT_DIR/collect-usage"
+fi
 LOG_DIR="${HOME}/.cache/ai-run"
 mkdir -p "${LOG_DIR}"
 
@@ -47,7 +53,8 @@ print(t[:80], end="")
 
 TASK_LABEL="$(sanitize_task)"
 STAMP="$(date +%Y%m%dT%H%M%S)"
-OUT_FILE="${LOG_DIR}/${AI_KIND}-${STAMP}.out"
+OUT_FILE="$(mktemp "${LOG_DIR}/${AI_KIND}-${STAMP}-XXXXXX.out")" ||
+  die "could not create private log"
 # Keep only a short pointer; do not echo secrets from the log.
 
 append_usage() {
@@ -100,6 +107,13 @@ stage_usage() {
     { warn_usage "usage.json is a symbolic link"; return 1; }
   append_usage usage.json "${AI_LABEL}" "${INP}" "${OUT}" "${TOTAL}" "${TASK_LABEL}" ||
     { warn_usage "could not append usage.json"; return 1; }
+  local -a limit_args=(--update-file usage.json)
+  if [[ $AI_KIND == claude ]]; then
+    limit_args+=(--claude-log "$OUT_FILE")
+  fi
+  if ! "$COLLECT_USAGE" "${limit_args[@]}" 2>&3; then
+    warn_usage "could not refresh AI limits"
+  fi
   git add -- usage.json ||
     { warn_usage "could not stage usage.json"; return 1; }
 }
@@ -258,9 +272,15 @@ def take_usage(u):
             u["cache_creation"].get("ephemeral_1h_input_tokens") or 0
         )
 
-for obj in reversed(candidates):
-    if isinstance(obj, dict) and ("usage" in obj or "input_tokens" in obj):
-        take_usage(obj.get("usage") or obj)
+results = [obj for obj in candidates if isinstance(obj, dict) and obj.get("type") == "result"]
+result_usage = results[-1].get("usage") if results else None
+for obj in reversed(results[-1:] if result_usage else candidates):
+    if not isinstance(obj, dict):
+        continue
+    message = obj.get("message")
+    usage = obj.get("usage") or (message.get("usage") if isinstance(message, dict) else None)
+    if usage or "input_tokens" in obj:
+        take_usage(usage or obj)
         break
 else:
     # Fallback regex if JSON parse failed.
@@ -309,7 +329,7 @@ else
     export CLAUDE_CODE_OAUTH_TOKEN
     CLAUDE_CODE_OAUTH_TOKEN="$(cat "${HOME}/.claude/oauth_token")"
     cd "${REPO_DIR}"
-    env -u ANTHROPIC_API_KEY claude -p --output-format json --dangerously-skip-permissions "${PROMPT}"
+    env -u ANTHROPIC_API_KEY claude -p --output-format stream-json --verbose --dangerously-skip-permissions "${PROMPT}"
   ) >"${OUT_FILE}" 2>&1
   rc=$?
   set -e
@@ -333,8 +353,9 @@ while i<n:
         except json.JSONDecodeError:
             pass
     i+=1
-if cands and isinstance(cands[-1], dict):
-    o=cands[-1]
+results = [obj for obj in cands if isinstance(obj, dict) and obj.get("type") == "result"]
+if results or (cands and isinstance(cands[-1], dict)):
+    o = (results or cands)[-1]
     result=o.get("result") or o.get("error") or o.get("type") or ""
     if isinstance(result, str):
         print(red.sub("[redacted]", result[-2000:]))

@@ -57,3 +57,27 @@ Jika `usage.json` berisi array, skrip memindahkan seluruh array ke `entries`. Ji
 - Default repo adalah `~/projects/studio-lokalin` dan default branch tujuan adalah `main`. Gunakan `USAGE_REPO` dan `AI_RUN_BRANCH` untuk menggantinya.
 - Skrip memerlukan `timeout`. Skrip melakukan rebase sebelum push dan membuat ulang pembaruan pada file terbaru jika terjadi konflik. Jika push ditolak karena non-fast-forward, skrip mencoba lagi satu kali. Skrip tidak pernah melakukan force-push.
 - Jika file berupa symlink, strukturnya tidak didukung, atau push gagal, skrip menulis peringatan ke stderr dan keluar dengan status gagal.
+
+## collect-usage
+
+Pembaruan persentase untuk halaman `usage.html`. Skrip membaca batas ChatGPT dari
+rollout lokal Codex dan batas Claude dari cache `~/.cache/ai-run/claude-limits.json`.
+Gunakan `--claude-log FILE` untuk membaca keluaran stream JSON Claude dan mengisi cache.
+Sumber yang tidak tersedia menghasilkan peringatan dan data sebelumnya tetap tersimpan.
+
+```bash
+~/bin/collect-usage --probe --grokbot <pct>
+```
+
+Ganti `<pct>` dengan persentase mingguan GrokBot. Argumen reset opsional mengikuti
+aturan `set-grokbot-usage`. Opsi `--probe` menjalankan satu permintaan kecil per CLI
+dengan akun langganan. Tanpa opsi tersebut, skrip membaca data lokal.
+
+Secara default, skrip menyinkronkan hanya `usage.json` ke `main` melalui clone
+sementara dengan aturan rebase dan retry yang sama seperti `set-grokbot-usage`.
+Gunakan `--update-file PATH` untuk memperbarui file lokal tanpa Git, atau
+`--dry-run` untuk mencetak nilai batas yang dihasilkan tanpa menulis file atau cache.
+
+Pasang `tools/collect-usage.sh` sebagai `~/bin/collect-usage` di samping
+`~/bin/ai-run`. Setiap pencatatan `ai-run` menyertakan batas yang tersedia dalam
+commit token yang sama tanpa permintaan tambahan ke CLI.
