@@ -1,0 +1,154 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#151713">
+  <title>Pemakaian AI — Studio Lokalin</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #151713;
+      --card: #20231e;
+      --line: #44483c;
+      --text: #f7ead1;
+      --muted: #b2b4a6;
+      --gold: #efc47d;
+      --green: #a9c28a;
+      --red: #eb9d89;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); color: var(--text); font: 15px system-ui, sans-serif; }
+    .wrap { max-width: 1060px; margin: auto; padding: 22px 18px 48px; }
+    header { padding-bottom: 16px; border-bottom: 1px solid var(--line); }
+    a { color: var(--gold); text-underline-offset: 4px; }
+    a:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+    h1, h2 { font-family: Georgia, serif; font-weight: 500; }
+    h1 { font-size: clamp(34px, 6vw, 52px); margin: 26px 0 18px; }
+    h2 { font-size: 27px; margin: 0 0 16px; }
+    h3 { font-size: 14px; margin: 0; font-weight: 650; }
+    .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .card { background: var(--card); border: 1px solid var(--line); border-radius: 17px; padding: 18px; }
+    .window + .window { border-top: 1px solid var(--line); margin-top: 14px; padding-top: 14px; }
+    .percent { margin: 5px 0; font-size: 35px; font-weight: 650; font-variant-numeric: tabular-nums; }
+    .percent.missing { font-size: 16px; color: var(--muted); }
+    .window { --level: var(--green); }
+    .window[data-level="yellow"] { --level: var(--gold); }
+    .window[data-level="red"] { --level: var(--red); }
+    .percent { color: var(--level); }
+    progress { display: block; width: 100%; height: 8px; appearance: none; border: 0; border-radius: 8px; background: var(--bg); overflow: hidden; }
+    progress[hidden] { display: none; }
+    progress::-webkit-progress-bar { background: var(--bg); }
+    .window[data-level="reset"] progress { background: var(--line); }
+    .window[data-level="reset"] progress::-webkit-progress-bar { background: var(--line); }
+    progress::-webkit-progress-value { background: var(--level); border-radius: 8px; }
+    progress::-moz-progress-bar { background: var(--level); border-radius: 8px; }
+    .small { color: var(--muted); font-size: 13px; line-height: 1.5; margin: 8px 0 0; }
+    .updated { margin-top: 18px; }
+    .stale { color: var(--gold); }
+    @media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header><a href="index.html">← Studio Lokalin</a></header>
+    <main>
+      <h1>Pemakaian AI</h1>
+      <div class="grid" id="cards"></div>
+      <p class="small" id="status" role="status"></p>
+    </main>
+  </div>
+  <script>
+    'use strict';
+
+    const noData = 'Belum ada data';
+    const percentFormat = new Intl.NumberFormat('id-ID', {maximumSignificantDigits: 21});
+    const dateFormat = new Intl.DateTimeFormat('id-ID', {
+      timeZone: 'Asia/Makassar', weekday: 'short', day: 'numeric', month: 'short',
+      hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+    });
+
+    function formatDate(value) {
+      const time = typeof value === 'string' ? Date.parse(value) : NaN;
+      if (!Number.isFinite(time)) return '';
+      const parts = Object.fromEntries(dateFormat.formatToParts(time).map(({type, value}) => [type, value]));
+      return `${parts.weekday}, ${parts.day} ${parts.month} ${parts.hour}.${parts.minute} WITA`;
+    }
+
+    function element(tag, text, className) {
+      const node = document.createElement(tag);
+      if (text !== undefined) node.textContent = text;
+      if (className) node.className = className;
+      return node;
+    }
+
+    function renderWindow(provider, label, percent, reset) {
+      const valid = Number.isFinite(percent) && percent >= 0 && percent <= 100;
+      const expired = typeof reset === 'string' && Date.parse(reset) < Date.now();
+      const box = element('div', undefined, 'window');
+      box.append(element('h3', label));
+      const reading = expired ? 'Sudah reset, menunggu data baru'
+        : valid ? percentFormat.format(percent) + '%' : noData;
+      box.append(element('p', reading, valid && !expired ? 'percent' : 'percent missing'));
+      if (expired || valid) {
+        box.dataset.level = expired ? 'reset' : percent < 50 ? 'green' : percent < 80 ? 'yellow' : 'red';
+        const bar = element('progress');
+        bar.max = 100;
+        bar.value = expired ? 0 : percent;
+        bar.setAttribute('aria-label', `${provider} · ${label}`);
+        box.append(bar);
+        if (!expired) box.append(element('p', 'Reset ' + (formatDate(reset) || 'belum diketahui'), 'small'));
+      }
+      return box;
+    }
+
+    function renderCard(name, limits, shared = false) {
+      const card = element('article', undefined, 'card');
+      card.append(element('h2', name));
+      if (shared) {
+        card.append(renderWindow(name, 'Mingguan', limits?.weekly_percent, limits?.resets_at));
+        card.append(element('p', 'Persentase GrokBot memakai limit paket bersama.', 'small'));
+      } else {
+        for (const [key, label] of [['five_hour', '5 jam'], ['weekly', 'Mingguan']]) {
+          const limitWindow = limits?.[key];
+          card.append(renderWindow(name, label, limitWindow?.used_percent, limitWindow?.resets_at));
+        }
+      }
+      const observed = formatDate(limits?.observed_at);
+      const dataTime = observed || formatDate(limits?.updated_at);
+      if (dataTime) {
+        const timestamp = element('p', 'Data per ' + dataTime, 'small updated');
+        if (observed && Date.now() - Date.parse(limits.observed_at) > 24 * 60 * 60 * 1000) {
+          timestamp.append(element('span', ' · data lama', 'stale'));
+        }
+        card.append(timestamp);
+      }
+      return card;
+    }
+
+    function render(data) {
+      document.getElementById('cards').replaceChildren(
+        renderCard('GrokBot', data?.grokbot, true),
+        renderCard('ChatGPT', data?.chatgpt_limits),
+        renderCard('Claude', data?.claude_limits)
+      );
+    }
+
+    async function refresh() {
+      const status = document.getElementById('status');
+      try {
+        const response = await fetch('usage.json', {cache: 'no-store'});
+        if (!response.ok) throw new Error('usage.json');
+        render(await response.json());
+        status.textContent = '';
+      } catch {
+        status.textContent = 'Gagal memuat data pemakaian.';
+      }
+    }
+
+    render();
+    refresh();
+    setInterval(refresh, 60_000);
+  </script>
+</body>
+</html>

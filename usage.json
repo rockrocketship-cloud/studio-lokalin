@@ -37,5 +37,36 @@
     "weekly_percent": 8.4,
     "resets_at": "2026-11-30T01:48:00+08:00",
     "updated_at": "2026-11-23T05:12:35.063341+08:00"
+  },
+  "chatgpt_limits": {
+    "five_hour": {
+      "used_percent": 9.0,
+      "window_minutes": 300,
+      "resets_at": "2026-11-23T09:26:31+08:00"
+    },
+    "weekly": {
+      "used_percent": 60.0,
+      "window_minutes": 10080,
+      "resets_at": "2026-11-28T11:36:58+08:00"
+    },
+    "source": "codex-cli",
+    "plan": "plus",
+    "observed_at": "2026-11-23T05:28:10.284000+08:00",
+    "updated_at": "2026-11-23T05:28:17.291703+08:00"
+  },
+  "claude_limits": {
+    "five_hour": {
+      "used_percent": 8.0,
+      "resets_at": "2026-11-23T09:10:00+08:00",
+      "status": "allowed"
+    },
+    "weekly": {
+      "used_percent": 7.0,
+      "resets_at": "2026-11-28T22:00:00+08:00",
+      "status": "allowed"
+    },
+    "source": "claude-code",
+    "observed_at": "2026-11-23T05:25:43.979668+08:00",
+    "updated_at": "2026-11-23T05:28:17.291703+08:00"
   }
 }

@@ -21,7 +21,8 @@
 .agent-token-card .token-meter span{display:block;height:100%;width:0;background:var(--gold);transition:width .5s}
 @media(max-width:600px){.agent-token-grid{grid-template-columns:1fr}.agent-token-card{display:grid;grid-template-columns:1fr auto;gap:3px 12px;align-items:center}.agent-token-card .token-num{margin:0;text-align:right}.agent-token-card .token-meter{grid-column:1/-1;margin:4px 0}}
 .usage-hero{margin-bottom:12px}
-</style></head><body><div class="wrap"><header><div class="brand"><div class="sun"></div><span>STUDIO LOKALIN</span></div><span class="badge">Pemakaian nyata</span></header><div class="row"><h1>AI Office</h1><button id="pauseBtn" class="btn ghost">Ⅱ Jeda</button></div><section class="card usage-hero" aria-live="polite">
+.usage-link{display:inline-block;margin-bottom:12px;text-decoration:none}
+</style></head><body><div class="wrap"><header><div class="brand"><div class="sun"></div><span>STUDIO LOKALIN</span></div><span class="badge">Pemakaian nyata</span></header><div class="row"><h1>AI Office</h1><button id="pauseBtn" class="btn ghost">Ⅱ Jeda</button></div><a class="btn primary usage-link" href="usage.html">Pemakaian AI (%)</a><section class="card usage-hero" aria-live="polite">
 <strong>Total token ChatGPT + Claude</strong>
 <div class="statval" id="heroToken">0</div>
 <div class="small" id="heroUsageStatus">Belum ada data</div>
