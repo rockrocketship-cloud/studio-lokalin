@@ -6,7 +6,7 @@ set -euo pipefail
 export PATH="${HOME}/.local/bin:${PATH}"
 
 USAGE_REPO="${USAGE_REPO:-${HOME}/projects/studio-lokalin}"
-USAGE_FILE="${USAGE_REPO}/usage.json"
+AI_RUN_BRANCH="${AI_RUN_BRANCH:-main}"
 MAX_ENTRIES=500
 LOG_DIR="${HOME}/.cache/ai-run"
 mkdir -p "${LOG_DIR}"
@@ -29,7 +29,6 @@ esac
 
 [[ -d "${REPO_DIR}" ]] || die "repo_dir not a directory: ${REPO_DIR}"
 REPO_DIR="$(cd "${REPO_DIR}" && pwd)"
-[[ -d "${USAGE_REPO}/.git" ]] || die "usage repo not found: ${USAGE_REPO}"
 
 # Truncate and redact the task label. Never keep tokens/secrets in usage.json.
 sanitize_task() {
@@ -52,25 +51,30 @@ OUT_FILE="${LOG_DIR}/${AI_KIND}-${STAMP}.out"
 # Keep only a short pointer; do not echo secrets from the log.
 
 append_usage() {
-  local ai="$1" input="$2" output="$3" total="$4" task="$5"
-  python3 - "$USAGE_FILE" "$ai" "$task" "$input" "$output" "$total" "$MAX_ENTRIES" << 'PY'
+  local usage_file="$1" ai="$2" input="$3" output="$4" total="$5" task="$6"
+  python3 - "$usage_file" "$ai" "$task" "$input" "$output" "$total" "$MAX_ENTRIES" << 'PY'
 import json, os, sys
 from datetime import datetime, timedelta, timezone
 
 path, ai, task, inp, out, total, max_entries = sys.argv[1:8]
 inp, out, total, max_entries = int(inp), int(out), int(total), int(max_entries)
-entries = []
-if os.path.exists(path):
-    try:
-        raw = open(path, encoding="utf-8").read().strip()
-        if raw:
-            data = json.loads(raw)
-            if isinstance(data, list):
-                entries = data
-            elif isinstance(data, dict) and isinstance(data.get("entries"), list):
-                entries = data["entries"]
-    except Exception:
-        entries = []
+
+def reject_constant(_):
+    raise ValueError("invalid JSON constant")
+
+try:
+    with open(path, encoding="utf-8") as f:
+        raw = f.read().strip(" \t\r\n")
+except FileNotFoundError:
+    raw = ""
+
+data = json.loads(raw, parse_constant=reject_constant) if raw else []
+if isinstance(data, list):
+    entries = data
+elif isinstance(data, dict) and isinstance(data.get("entries"), list):
+    entries = data["entries"]
+else:
+    sys.exit("unsupported usage.json structure")
 
 wita = timezone(timedelta(hours=8))
 entries.append({
@@ -81,31 +85,113 @@ entries.append({
     "output": max(0, out),
     "total": max(0, total),
 })
-entries = entries[-max_entries:]
+del entries[:-max_entries]
+encoded = json.dumps(data, indent=2, ensure_ascii=False, allow_nan=False).encode("utf-8")
 os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
-with open(path, "w", encoding="utf-8") as f:
-    json.dump(entries, f, indent=2, ensure_ascii=False)
-    f.write("\n")
+with open(path, "wb") as f:
+    f.write(encoded + b"\n")
 PY
 }
 
-commit_usage() {
-  # Commit and push usage.json on the current feature branch only. Never force to main.
-  # If the branch is main, skip push (user must enable that later).
-  git -C "${USAGE_REPO}" add -- "${USAGE_FILE}"
-  if git -C "${USAGE_REPO}" diff --cached --quiet -- "${USAGE_FILE}"; then
-    printf 'ai-run: usage.json unchanged, skip commit\n' >&2
-    return 0
-  fi
-  git -C "${USAGE_REPO}" commit -m "chore: log token usage ($( [[ ${AI_KIND} == codex ]] && echo ChatGPT || echo Claude ))" -- "${USAGE_FILE}"
-  local branch
-  branch="$(git -C "${USAGE_REPO}" rev-parse --abbrev-ref HEAD)"
-  if [[ "${branch}" == "main" || "${branch}" == "master" ]]; then
-    printf 'ai-run: on %s, not pushing usage.json (enable later)\n' "${branch}" >&2
-    return 0
-  fi
-  git -C "${USAGE_REPO}" push -u origin "${branch}"
+warn_usage() { printf 'ai-run: warning: %s\n' "$*" >&3; }
+
+stage_usage() {
+  [[ ! -L usage.json ]] ||
+    { warn_usage "usage.json is a symbolic link"; return 1; }
+  append_usage usage.json "${AI_LABEL}" "${INP}" "${OUT}" "${TOTAL}" "${TASK_LABEL}" ||
+    { warn_usage "could not append usage.json"; return 1; }
+  git add -- usage.json ||
+    { warn_usage "could not stage usage.json"; return 1; }
 }
+
+rebase_usage() {
+  timeout -k 5s 60s git fetch --no-tags origin "refs/heads/${AI_RUN_BRANCH}" ||
+    { warn_usage "could not fetch the target branch before push"; return 1; }
+  if git rebase FETCH_HEAD; then
+    return 0
+  fi
+
+  # Both runs can append at the same spot. Rebuild our entry on the fetched file if that conflicts.
+  if [[ -n "$(git ls-files -u -- usage.json)" ]] &&
+    git rebase --abort && git checkout --detach FETCH_HEAD; then
+    warn_usage "rebase conflicted in usage.json; rebuilding the entry on the fetched branch"
+    stage_usage && git commit -m "${message}" -- usage.json ||
+      { warn_usage "could not rebuild the usage commit after a rebase conflict"; return 1; }
+  else
+    warn_usage "could not rebase the usage commit"
+    return 1
+  fi
+}
+
+commit_usage() (
+  export GIT_TERMINAL_PROMPT=0
+  export GIT_ASKPASS=/bin/true
+  export GIT_SSH_COMMAND="${GIT_SSH_COMMAND:-ssh} -o BatchMode=yes"
+
+  local temp repo fetch_url push_url push_result push_status identity value
+  local message="chore: log token usage (${AI_LABEL})"
+
+  command -v timeout >/dev/null ||
+    { warn_usage "timeout is required to sync usage.json"; return 1; }
+
+  # Keep all checkout and index changes inside a disposable clone.
+  unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR
+  unset GIT_OBJECT_DIRECTORY GIT_ALTERNATE_OBJECT_DIRECTORIES
+  repo="$(cd -- "${USAGE_REPO}" && pwd -P)" &&
+    fetch_url="$(git -C "${repo}" remote get-url origin)" &&
+    push_url="$(git -C "${repo}" remote get-url --push origin)" ||
+    { warn_usage "could not read origin from the usage repo"; return 1; }
+  case "${fetch_url}" in /*|*:*) ;; *) fetch_url="${repo}/${fetch_url}" ;; esac
+  case "${push_url}" in /*|*:*) ;; *) push_url="${repo}/${push_url}" ;; esac
+
+  git check-ref-format "refs/heads/${AI_RUN_BRANCH}" ||
+    { warn_usage "invalid AI_RUN_BRANCH"; return 1; }
+  temp="$(mktemp -d)" ||
+    { warn_usage "could not create a temporary directory"; return 1; }
+  trap 'rm -rf -- "${temp}" || warn_usage "could not remove temporary usage clone"' EXIT
+  trap 'exit 1' HUP INT TERM
+
+  timeout -k 5s 60s git -c core.hooksPath=/dev/null clone --quiet --single-branch --branch "${AI_RUN_BRANCH}" -- "${fetch_url}" "${temp}/repo" &&
+    cd -- "${temp}/repo" &&
+    git remote set-url --push origin "${push_url}" &&
+    git config core.hooksPath /dev/null &&
+    git config commit.gpgsign false ||
+    { warn_usage "could not set up the temporary usage clone"; return 1; }
+  for identity in user.name user.email; do
+    if value="$(git -C "${repo}" config --local --get "${identity}")"; then
+      git config "${identity}" "${value}" ||
+        { warn_usage "could not set the usage commit identity"; return 1; }
+    fi
+  done
+
+  stage_usage || return 1
+  if git diff --cached --quiet -- usage.json; then
+    printf 'ai-run: usage.json unchanged, skip commit and push\n' >&3
+    return 0
+  fi
+  git commit -m "${message}" -- usage.json ||
+    { warn_usage "could not commit usage.json"; return 1; }
+
+  rebase_usage || return 1
+  if push_result="$(LC_ALL=C timeout -k 5s 60s git push --porcelain origin "HEAD:refs/heads/${AI_RUN_BRANCH}")"; then
+    return 0
+  else
+    push_status=$?
+  fi
+  if [[ ${push_status} == 124 || ${push_status} == 137 ]]; then
+    warn_usage "push timed out"
+    return 1
+  fi
+  # Porcelain reports a race as either non-fast-forward or fetch first.
+  case "${push_result}" in
+    *$'\t[rejected] (non-fast-forward)'*|*$'\t[rejected] (fetch first)'*)
+      rebase_usage || return 1
+      timeout -k 5s 60s git push origin "HEAD:refs/heads/${AI_RUN_BRANCH}" ||
+        { warn_usage "could not push usage.json after retry"; return 1; }
+      ;;
+    *) warn_usage "could not push usage.json"; return 1 ;;
+  esac
+) 3>&2 >/dev/null 2>/dev/null
 
 parse_codex_tokens() {
   python3 - "$1" << 'PY'
@@ -200,7 +286,7 @@ if [[ "${AI_KIND}" == "codex" ]]; then
   rc=$?
   set -e
   # Show a short tail only; never dump credentials if they leaked into a log.
-  python3 - "${OUT_FILE}" << 'PY' >&2
+  python3 - "${OUT_FILE}" << 'PY' >&2 || printf 'ai-run: warning: could not summarize command output\n' >&2
 import re, sys
 p=sys.argv[1]
 lines=open(p, encoding="utf-8", errors="replace").read().splitlines()
@@ -208,7 +294,10 @@ red=re.compile(r"(ghp_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+|sk-(?:ant-)?[A-Za-z
 for line in lines[-40:]:
     print(red.sub("[redacted]", line))
 PY
-  read -r INP OUT TOTAL < <(parse_codex_tokens "${OUT_FILE}")
+  if ! read -r INP OUT TOTAL < <(parse_codex_tokens "${OUT_FILE}" 2>/dev/null); then
+    printf 'ai-run: warning: could not parse token usage\n' >&2
+    exit "${rc}"
+  fi
   AI_LABEL="ChatGPT"
 else
   if [[ ! -f "${HOME}/.claude/oauth_token" ]]; then
@@ -225,7 +314,7 @@ else
   rc=$?
   set -e
   # Do not print raw JSON (may be huge). Summarize result / errors only.
-  python3 - "${OUT_FILE}" << 'PY' >&2
+  python3 - "${OUT_FILE}" << 'PY' >&2 || printf 'ai-run: warning: could not summarize command output\n' >&2
 import json, re, sys
 text=open(sys.argv[1], encoding="utf-8", errors="replace").read()
 red=re.compile(r"(ghp_[A-Za-z0-9_]+|github_pat_[A-Za-z0-9_]+|sk-(?:ant-)?[A-Za-z0-9_-]+)", re.I)
@@ -254,14 +343,16 @@ if cands and isinstance(cands[-1], dict):
 else:
     print(red.sub("[redacted]", "\n".join(text.splitlines()[-20:])), file=sys.stderr)
 PY
-  read -r INP OUT TOTAL < <(parse_claude_tokens "${OUT_FILE}")
+  if ! read -r INP OUT TOTAL < <(parse_claude_tokens "${OUT_FILE}" 2>/dev/null); then
+    printf 'ai-run: warning: could not parse token usage\n' >&2
+    exit "${rc}"
+  fi
   AI_LABEL="Claude"
 fi
 
 printf 'ai-run: %s tokens input=%s output=%s total=%s exit=%s\n' "${AI_LABEL}" "${INP}" "${OUT}" "${TOTAL}" "${rc}" >&2
 printf 'ai-run: log %s\n' "${OUT_FILE}" >&2
 
-append_usage "${AI_LABEL}" "${INP}" "${OUT}" "${TOTAL}" "${TASK_LABEL}"
-commit_usage
+commit_usage || :
 
 exit "${rc}"
